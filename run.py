@@ -52,13 +52,13 @@ def parse_entries(pub_name, entries, date_term, search_value):
         soup = BeautifulSoup(entry["content"][0]["value"], "html.parser")
 
         if pub_name == "Longreads":
-            item = _parse_longreads_entry(soup, entry, date_term, search_value)
+            item = _parse_longreads_entry(soup, entry, date_term, search_value, pub_name)
             if item is not None:
                 items.append(item)
         elif pub_name == "The Browser":
-            items += _parse_the_browser_entry(soup, entry, date_term)
+            items += _parse_the_browser_entry(soup, entry, date_term, pub_name)
         elif pub_name == "The Sunday Long Read":
-            items += _parse_the_browser_entry(soup, entry, date_term)
+            items += _parse_the_sunday_long_read(soup, entry, date_term, pub_name)
 
     logging.info(f"Found {len(items)} items from {pub_name}")
 
@@ -88,15 +88,15 @@ def _get_final_url(url):
     return response.url.split("?")[0]
 
 
-def _parse_longreads_entry(soup, entry, date_term, search_value):
+def _parse_longreads_entry(soup, entry, date_term, search_value, pub_name):
     url = soup.find("a", string=search_value)
 
     return _save_item(
-        entry["title"], url, entry["description"], parser.parse(entry[date_term])
+        entry["title"], url, pub_name, parser.parse(entry[date_term])
     )
 
 
-def _parse_the_browser_entry(soup, entry, date_term):
+def _parse_the_browser_entry(soup, entry, date_term, pub_name):
     items = []
     headers = soup.find_all("h3")
 
@@ -105,7 +105,7 @@ def _parse_the_browser_entry(soup, entry, date_term):
             _save_item(
                 header.contents[0].string,
                 header.contents[0],
-                header.contents[0].string,
+                pub_name,
                 parser.parse(entry[date_term]),
             )
         )
@@ -113,7 +113,7 @@ def _parse_the_browser_entry(soup, entry, date_term):
     return items
 
 
-def _parse_the_sunday_long_read(soup, entry, date_term):
+def _parse_the_sunday_long_read(soup, entry, date_term, pub_name):
     items = []
     headers = soup.find_all("h1")
 
@@ -122,7 +122,7 @@ def _parse_the_sunday_long_read(soup, entry, date_term):
             _save_item(
                 header.contents[0].string,
                 header.contents[0],
-                header.contents[0].string,
+                pub_name,
                 parser.parse(entry[date_term]),
             )
         )

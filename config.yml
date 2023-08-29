@@ -2,7 +2,7 @@
 days_old: 7
 output:
   title: "Longform RSS feed"
-  link: "https://github.com/egd-io/longform-rss-feed/feed.xml"
+  link: "https://raw.githubusercontent.com/egd-io/longform-rss-feed/main/feed.xml"
   description: "An aggregated feed of longform journalism recommended from various sources"
   language: "en-US"
   filename: "feed.xml"

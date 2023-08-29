@@ -1,0 +1,30 @@
+name: Update feed
+on:
+  workflow_dispatch:
+  schedule:
+    - cron:  '0 */6 * * *'
+jobs:
+  update-feed:
+    name: Update feed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Setup python env
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.8'
+          cache: 'pip'
+      - name: Install requirements
+        run: pip install -r requirements.txt
+      - name: Run code
+        run: python -m run
+      - name: Get date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d %H:%M %z')"
+      - name: Commit and push new feed
+        uses: EndBug/add-and-commit@v9.1.3
+        with:
+          message: Update feed for ${{ steps.date.outputs.date }}
