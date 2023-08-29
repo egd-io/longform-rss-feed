@@ -1,0 +1,24 @@
+---
+days_old: 7
+output:
+  title: "Longform RSS feed"
+  link: "https://github.com/egd-io/longform-rss-feed/feed.xml"
+  description: "An aggregated feed of longform journalism recommended from various sources"
+  language: "en-US"
+  filename: "feed.xml"
+publications:
+  - name: "The Browser"
+    date_term: "updated"
+    search:
+      value: null
+    url: "https://kill-the-newsletter.com/feeds/wi8o394l8fv0gt0z.xml"
+  - name: "Longreads"
+    date_term: "published"
+    search:
+      value: "Read the story"
+    url: "https://longreads.com/feed/"
+  # - name: "The Sunday Long Read"
+  #   date_term: "published"
+  #   search:
+  #     value: null
+  #   url: "https://us9.campaign-archive.com/feed?u=6e1ae4ac632498a38c1d57c54&id=67e6e8a504"

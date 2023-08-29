@@ -1,0 +1,6 @@
+[submodule "vendor"]
+	path = vendor
+	url = https://github.com/svpino/rfeed.git
+[submodule "vendor/svpino/rfeed"]
+	path = vendor/svpino/rfeed
+	url = https://github.com/svpino/rfeed.git
