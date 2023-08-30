@@ -17,8 +17,9 @@ publications:
     search:
       value: "Read the story"
     url: "https://longreads.com/feed/"
-  # - name: "The Sunday Long Read"
-  #   date_term: "published"
-  #   search:
-  #     value: null
-  #   url: "https://us9.campaign-archive.com/feed?u=6e1ae4ac632498a38c1d57c54&id=67e6e8a504"
+  - name: "The Sunday Long Read"
+    date_term: "published"
+    url: "https://us9.campaign-archive.com/feed?u=6e1ae4ac632498a38c1d57c54&id=67e6e8a504"
+  - name: "Hippocampus Magazine"
+    date_term: "published"
+    url: "https://hippocampusmagazine.com/rss/"

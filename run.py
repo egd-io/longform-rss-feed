@@ -7,6 +7,7 @@ import yaml
 from bs4 import BeautifulSoup
 from dateutil import parser
 from vendor.svpino.rfeed import rfeed
+from urllib.parse import urlparse
 
 logging.basicConfig(
     level=logging.INFO,
@@ -52,15 +53,15 @@ def parse_entries(pub_name, entries, date_term, search_value):
         soup = BeautifulSoup(entry["content"][0]["value"], "html.parser")
 
         if pub_name == "Longreads":
-            item = _parse_longreads_entry(soup, entry, date_term, search_value, pub_name)
+            item = _parse_longreads_entry(
+                soup, entry, date_term, search_value, pub_name
+            )
             if item is not None:
                 items.append(item)
         elif pub_name == "The Browser":
             items += _parse_the_browser_entry(soup, entry, date_term, pub_name)
         elif pub_name == "The Sunday Long Read":
             items += _parse_the_sunday_long_read(soup, entry, date_term, pub_name)
-
-    logging.info(f"Found {len(items)} items from {pub_name}")
 
     return items
 
@@ -78,9 +79,18 @@ def save_feed(items, filename):
     _write_feed(feed.rss(), filename)
 
 
+def save_item(title, link, description, pub_date):
+    return rfeed.Item(
+        title=title,
+        link=_get_final_url(link.split("?")[0]),
+        description=description,
+        pubDate=pub_date,
+    )
+
+
 def _get_final_url(url):
     logging.info(f"Checking URL for redirects: {url}")
-    response = requests.get(url)
+    response = requests.get(url, allow_redirects=True)
 
     if len(response.history) > 0:
         logging.info(f"Found final URL: {response.url.split('?')[0]}")
@@ -91,9 +101,13 @@ def _get_final_url(url):
 def _parse_longreads_entry(soup, entry, date_term, search_value, pub_name):
     url = soup.find("a", string=search_value)
 
-    return _save_item(
-        entry["title"], url, pub_name, parser.parse(entry[date_term])
-    )
+    if url is None:
+        logging.info(f"URL for {entry['title']} is not valid. Skipping...")
+        return None
+    else:
+        return save_item(
+            entry["title"], url["href"], pub_name, parser.parse(entry[date_term])
+        )
 
 
 def _parse_the_browser_entry(soup, entry, date_term, pub_name):
@@ -101,14 +115,19 @@ def _parse_the_browser_entry(soup, entry, date_term, pub_name):
     headers = soup.find_all("h3")
 
     for header in headers:
-        items.append(
-            _save_item(
-                header.contents[0].string,
-                header.contents[0],
-                pub_name,
-                parser.parse(entry[date_term]),
+        if isinstance(header.contents[0], str):
+            logging.info(
+                f"URL for {header.contents[0].string} is not valid. Skipping..."
             )
-        )
+        else:
+            items.append(
+                save_item(
+                    header.contents[0].string,
+                    header.contents[0]["href"],
+                    pub_name,
+                    parser.parse(entry[date_term]),
+                )
+            )
 
     return items
 
@@ -118,26 +137,25 @@ def _parse_the_sunday_long_read(soup, entry, date_term, pub_name):
     headers = soup.find_all("h1")
 
     for header in headers:
-        items.append(
-            _save_item(
-                header.contents[0].string,
-                header.contents[0],
-                pub_name,
-                parser.parse(entry[date_term]),
+        if len(header.contents) < 2:
+            logging.info(
+                f"URL for {header.contents[0].string} is not valid. Skipping..."
             )
-        )
+        elif isinstance(header.contents[1], str):
+            logging.info(
+                f"URL for {header.contents[1].string} is not valid. Skipping..."
+            )
+        else:
+            items.append(
+                save_item(
+                    header.contents[1].string,
+                    header.contents[1]["href"],
+                    pub_name,
+                    parser.parse(entry[date_term]),
+                )
+            )
 
     return items
-
-
-def _save_item(title, link, description, pub_date):
-    if link is not None:
-        return rfeed.Item(
-            title=title,
-            link=_get_final_url(link["href"].split("?")[0]),
-            description=description,
-            pubDate=pub_date,
-        )
 
 
 def _write_feed(feed, filename):
@@ -157,13 +175,27 @@ if __name__ == "__main__":
 
         logging.info(f"Filtering out articles older than {config['days_old']} days...")
         entries = get_entries(feed, publication["date_term"])
+        logging.info(f"Found {len(entries)} items from {publication['name']}")
 
-        final_entries += parse_entries(
-            publication["name"],
-            entries,
-            publication["date_term"],
-            publication["search"]["value"],
-        )
+        if "search" in publication:
+            final_entries += parse_entries(
+                publication["name"],
+                entries,
+                publication["date_term"],
+                publication["search"]["value"],
+            )
+        else:
+            for entry in entries:
+                final_entries.append(
+                    save_item(
+                        entry["title"],
+                        entry["link"],
+                        publication["name"],
+                        parser.parse(entry[publication["date_term"]]),
+                    )
+                )
 
-    logging.info(f"Writing {len(final_entries)} total items to {config['output']['filename']}...")
+    logging.info(
+        f"Writing {len(final_entries)} total items to {config['output']['filename']}..."
+    )
     save_feed(final_entries, config["output"]["filename"])
